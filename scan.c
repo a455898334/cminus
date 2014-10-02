@@ -94,26 +94,24 @@ TokenType getToken(void)
            state = INNUM;
          else if (isalpha(c))
            state = INID;
-         else if (c == ':')
-           state = INASSIGN;
+         else if (c == '=')
+           state = INEQ;
+         else if (c == '!')
+           state = INNE;
+         else if (c == '/')
+           state = INOVER;
+         else if (c == '<')
+           state = INLT;
+         else if (c == '>')
+           state = INGT;
          else if ((c == ' ') || (c == '\t') || (c == '\n'))
            save = FALSE;
-         else if (c == '{')
-         { save = FALSE;
-           state = INCOMMENT;
-         }
          else
          { state = DONE;
            switch (c)
            { case EOF:
                save = FALSE;
                currentToken = ENDFILE;
-               break;
-             case '=':
-               currentToken = EQ;
-               break;
-             case '<':
-               currentToken = LT;
                break;
              case '+':
                currentToken = PLUS;
@@ -124,17 +122,29 @@ TokenType getToken(void)
              case '*':
                currentToken = TIMES;
                break;
-             case '/':
-               currentToken = OVER;
-               break;
              case '(':
                currentToken = LPAREN;
                break;
              case ')':
                currentToken = RPAREN;
                break;
+             case '{':
+               currentToken = LCURLY;
+               break;
+             case '}':
+               currentToken = RCURLY;
+               break;
+             case '[':
+               currentToken = LBRACE;
+               break;
+             case ']':
+               currentToken = RBRACE;
+               break;
              case ';':
                currentToken = SEMI;
+               break;
+             case ',':
+               currentToken = COMMA;
                break;
              default:
                currentToken = ERROR;
@@ -142,23 +152,73 @@ TokenType getToken(void)
            }
          }
          break;
+       case INCOMMENT_:
+         if (c == '/')
+            state = START;
        case INCOMMENT:
          save = FALSE;
          if (c == EOF)
          { state = DONE;
            currentToken = ENDFILE;
          }
-         else if (c == '}') state = START;
+         else if (c == '*') state = INCOMMENT_;
          break;
-       case INASSIGN:
+       case INEQ:
          state = DONE;
          if (c == '=')
+           currentToken = EQ;
+         else
+         { /* backup in the input */
+           ungetNextChar();
+           save = FALSE;
            currentToken = ASSIGN;
+         }
+         break;
+       case INNE:
+         state = DONE;
+         if (c == '=')
+           currentToken = NE;
          else
          { /* backup in the input */
            ungetNextChar();
            save = FALSE;
            currentToken = ERROR;
+         }
+         break;
+       case INOVER:
+         if (c == '*')
+         { save = FALSE;
+           tokenStringIndex--;
+           state = INCOMMENT;
+         }
+         else
+         { /* backup in the input */
+           ungetNextChar();
+           save = FALSE;
+           state = DONE;
+           currentToken = OVER;
+         }
+         break;
+       case INLT:
+         state = DONE;
+         if (c == '=')
+           currentToken = LE;
+         else
+         { /* backup in the input */
+           ungetNextChar();
+           save = FALSE;
+           currentToken = LT;
+         }
+         break;
+       case INGT:
+         state = DONE;
+         if (c == '=')
+           currentToken = GE;
+         else
+         { /* backup in the input */
+           ungetNextChar();
+           save = FALSE;
+           currentToken = GT;
          }
          break;
        case INNUM:
