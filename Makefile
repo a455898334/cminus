@@ -10,8 +10,22 @@ CFLAGS = -g
 
 OBJS = main.o util.o scan.o parse.o symtab.o analyze.o code.o cgen.o
 
+UNAME := $(shell uname)
+ifeq ($(UNAME), Darwin)
+	fl = -ll
+else
+	fl = -lfl
+endif
+
 cminus: $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) -o cminus
+
+cminus_flex: main.o util.o lex.yy.o
+	$(CC) $(CFLAGS) main.o util.o lex.yy.o -o cminus_flex $(fl)
+
+lex.yy.o: lex/cminus.l scan.h util.h globals.h
+	flex -o lex.yy.c lex/cminus.l
+	$(CC) $(CFLAGS) -c lex.yy.c $(fl)
 
 main.o: main.c globals.h util.h scan.h parse.h analyze.h cgen.h
 	$(CC) $(CFLAGS) -c main.c
@@ -41,9 +55,10 @@ clean:
 	-rm cminus
 	-rm tm
 	-rm $(OBJS)
+	-rm lex.yy.o lex.yy.c cminus_flex
 
 tm: tm.c
 	$(CC) $(CFLAGS) tm.c -o tm
 
-all: cminus tm
+all: cminus cminus_flex tm
 
