@@ -16,18 +16,14 @@ ifeq ($(UNAME), Darwin)
 else
 	fl = -lfl
 endif
+cminus: main.o util.o scan.o parse.o
+	$(CC) $(CFLAGS) main.o util.o scan.o parse.o -o cminus
 
-cminus: $(OBJS)
-	$(CC) $(CFLAGS) $(OBJS) -o cminus
+parse.c y.tab.h: yacc/cminus.y
+	yacc -d yacc/cminus.y
+	mv y.tab.c parse.c
 
-cminus_flex: main.o util.o lex.yy.o
-	$(CC) $(CFLAGS) main.o util.o lex.yy.o -o cminus_flex $(fl)
-
-lex.yy.o: lex/cminus.l scan.h util.h globals.h
-	flex -o lex.yy.c lex/cminus.l
-	$(CC) $(CFLAGS) -c lex.yy.c $(fl)
-
-main.o: main.c globals.h util.h scan.h parse.h analyze.h cgen.h
+main.o: main.c globals.h util.h scan.h y.tab.h
 	$(CC) $(CFLAGS) -c main.c
 
 util.o: util.c util.h globals.h
@@ -55,10 +51,10 @@ clean:
 	-rm cminus
 	-rm tm
 	-rm $(OBJS)
-	-rm lex.yy.o lex.yy.c cminus_flex
+	-rm y.tab.h parse.c
 
 tm: tm.c
 	$(CC) $(CFLAGS) tm.c -o tm
 
-all: cminus cminus_flex tm
+all: cminus tm
 
