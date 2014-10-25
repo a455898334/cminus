@@ -3,3 +3,6 @@ tiny
 cminus
 cminus_flex
 lex.yy.c
+parse.c
+y.output
+y.tab.h

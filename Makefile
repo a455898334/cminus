@@ -20,7 +20,7 @@ cminus: main.o util.o scan.o parse.o
 	$(CC) $(CFLAGS) main.o util.o scan.o parse.o -o cminus
 
 parse.c y.tab.h: yacc/cminus.y
-	yacc -d yacc/cminus.y
+	yacc -d -t -v yacc/cminus.y
 	mv y.tab.c parse.c
 
 main.o: main.c globals.h util.h scan.h y.tab.h
@@ -51,7 +51,7 @@ clean:
 	-rm cminus
 	-rm tm
 	-rm $(OBJS)
-	-rm y.tab.h parse.c
+	-rm y.tab.h parse.c y.output
 
 tm: tm.c
 	$(CC) $(CFLAGS) tm.c -o tm
