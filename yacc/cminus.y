@@ -163,7 +163,7 @@ iteration_stmt      : WHILE LPAREN expression RPAREN statement
 return_stmt         : RETURN SEMI { $$ = newStmtNode(ReturnK);}
                     | RETURN expression SEMI
                          { $$ = newStmtNode(ReturnK);
-                           $$->child[0] = $1;
+                           $$->child[0] = $2;
                          }
                     ;
 expression          : var ASSIGN expression
