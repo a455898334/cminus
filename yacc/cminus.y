@@ -54,12 +54,18 @@ var_declaration     : type_specifier ID SEMI
                            $$->attr.name = nameStackPop();
                            $$->lineno = savedLineNo;
                          }
-                    | type_specifier ID LBRACE NUM RBRACE SEMI
+                    | type_specifier ID LBRACE size RBRACE SEMI
                          { $$ = newExpNode(VarArrayK);
                            $$->type = (ExpType)$1;
                            $$->attr.name = nameStackPop();
                            $$->lineno = savedLineNo;
                            $$->child[0] = $4;
+                         }
+                    ;
+size                : NUM
+                         { $$ = newExpNode(ConstK);
+                           $$->type = Integer;
+                           $$->attr.val = atoi(tokenString);
                          }
                     ;
 type_specifier      : INT { $$ = Integer; }

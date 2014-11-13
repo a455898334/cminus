@@ -174,7 +174,7 @@ void printTree( TreeNode * tree )
           fprintf(listing,"Var declaration, name : %s, type : %s\n", tree->attr.name, tree->type == Integer ? "int" : "void");
           break;
         case VarArrayK:
-          fprintf(listing,"Array declaration, name : %s, type : %s\n", tree->attr.name, tree->type == Integer ? "int" : "void");
+          fprintf(listing,"Array declaration, name : %s, type : %s, size below\n", tree->attr.name, tree->type == Integer ? "int" : "void");
           break;
         case CallK:
           fprintf(listing,"Call, name : %s, with arguments below\n", tree->attr.name);
