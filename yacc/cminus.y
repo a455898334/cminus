@@ -18,8 +18,11 @@ static int savedLineNo;  /* ditto */
 static TreeNode * savedTree; /* stores syntax tree for later return */
 static int yylex(void); // added 11/2/11 to ensure no conflict with lex
 char *nameStack[10];
-int stackIndex = 0;
+int nameStackIndex = 0;
 char* nameStackPop();
+int lineStack[10];
+int lineStackIndex = 0;
+int lineStackPop();
 %}
 
 %token IF ELSE WHILE RETURN INT VOID
@@ -52,13 +55,13 @@ var_declaration     : type_specifier ID SEMI
                          { $$ = newExpNode(VarK);
                            $$->type = (ExpType)$1;
                            $$->attr.name = nameStackPop();
-                           $$->lineno = savedLineNo;
+                           $$->lineno = lineStackPop();
                          }
                     | type_specifier ID LBRACE size RBRACE SEMI
                          { $$ = newExpNode(VarArrayK);
                            $$->type = (ExpType)$1;
                            $$->attr.name = nameStackPop();
-                           $$->lineno = savedLineNo;
+                           $$->lineno = lineStackPop();
                            $$->child[0] = $4;
                          }
                     ;
@@ -66,6 +69,7 @@ size                : NUM
                          { $$ = newExpNode(ConstK);
                            $$->type = Integer;
                            $$->attr.val = atoi(tokenString);
+                           $$->lineno = lineno;
                          }
                     ;
 type_specifier      : INT { $$ = Integer; }
@@ -75,7 +79,7 @@ fun_declaration     : type_specifier ID LPAREN params RPAREN compound_stmt
                          { $$ = newStmtNode(FunctionK);
                            $$->type = (ExpType)$1;
                            $$->attr.name = nameStackPop();
-                           $$->lineno = savedLineNo;
+                           $$->lineno = lineStackPop();
                            $$->child[0] = $4;
                            $$->child[1] = $6;
                          }
@@ -84,6 +88,7 @@ params              : param_list { $$ = $1; }
                     | VOID
                          { $$ = newExpNode(SingleParamK);
                            $$->type = Void;
+                           $$->lineno = lineno;
                          }
                     ;
 param_list          : param_list COMMA param
@@ -101,18 +106,20 @@ param               : type_specifier ID
                          { $$ = newExpNode(SingleParamK);
                            $$->type = (ExpType)$1;
                            $$->attr.name = nameStackPop();
+                           $$->lineno = lineStackPop();
                          }
                     | type_specifier ID LBRACE RBRACE
                          { $$ = newExpNode(ArrayParamK);
                            $$->type = (ExpType)$1;
                            $$->attr.name = nameStackPop();
-                           $$->lineno = savedLineNo;
+                           $$->lineno = lineStackPop();
                          }
                     ;
 compound_stmt       : LCURLY local_declarations statement_list RCURLY
                          { $$ = newStmtNode(CompoundK);
                            $$->child[0] = $2;
                            $$->child[1] = $3;
+                           //$$->lineno = $2->lineno;
                          }
                     ;
 local_declarations  : local_declarations var_declaration
@@ -151,6 +158,7 @@ selection_stmt      : IF LPAREN expression RPAREN statement
                            $$->child[0] = $3;
                            $$->child[1] = $5;
                            $$->attr.withElse = FALSE;
+                           $$->lineno = $3->lineno;
                          }
                     | IF LPAREN expression RPAREN statement ELSE statement
                          { $$ = newStmtNode(IfK);
@@ -158,18 +166,21 @@ selection_stmt      : IF LPAREN expression RPAREN statement
                            $$->child[1] = $5;
                            $$->child[2] = $7;
                            $$->attr.withElse = TRUE;
+                           $$->lineno = $3->lineno;
                          }
                     ;
 iteration_stmt      : WHILE LPAREN expression RPAREN statement
                          { $$ = newStmtNode(WhileK);
                            $$->child[0] = $3;
                            $$->child[1] = $5;
+                           $$->lineno = $3->lineno;
                          }
                     ;
 return_stmt         : RETURN SEMI { $$ = newStmtNode(ReturnK);}
                     | RETURN expression SEMI
                          { $$ = newStmtNode(ReturnK);
                            $$->child[0] = $2;
+                           $$->lineno = $2->lineno;
                          }
                     ;
 expression          : var ASSIGN expression
@@ -177,6 +188,7 @@ expression          : var ASSIGN expression
                            $$->type = Integer;
                            $$->child[0] = $1;
                            $$->child[1] = $3;
+                           $$->lineno = $1->lineno;
                          }
                     | simple_expression { $$ = $1; }
                     ;
@@ -184,11 +196,13 @@ var                 : ID
                          { $$ = newExpNode(IdK);
                            $$->type = Integer;
                            $$->attr.name = nameStackPop();
+                           $$->lineno = lineStackPop();
                          }
                     | ID LBRACE expression RBRACE
                          { $$ = newExpNode(IdK);
                            $$->attr.name = nameStackPop();
                            $$->child[0] = $3;
+                           $$->lineno = lineStackPop();
                          }
                     ;
 simple_expression   : additive_expression relop additive_expression
@@ -197,6 +211,7 @@ simple_expression   : additive_expression relop additive_expression
                            $$->child[0] = $1;
                            $$->child[1] = $3;
                            $$->attr.op = $2;
+                           $$->lineno = $1->lineno;
                          }
                     | additive_expression
                          { $$ = $1; }
@@ -214,6 +229,7 @@ additive_expression : additive_expression addop term
                            $$->child[0] = $1;
                            $$->child[1] = $3;
                            $$->attr.op = $2;
+                           $$->lineno = $1->lineno;
                          }
                     | term { $$ = $1; }
                     ;
@@ -226,6 +242,7 @@ term                : term mulop factor
                            $$->child[0] = $1;
                            $$->child[1] = $3;
                            $$->attr.op = $2;
+                           $$->lineno = $1->lineno;
                          }
                     | factor { $$ = $1; }
                     ;
@@ -240,13 +257,14 @@ factor              : LPAREN expression RPAREN
                          { $$ = newExpNode(ConstK);
                            $$->type = Integer;
                            $$->attr.val = atoi(tokenString);
+                           $$->lineno = lineno;
                          }
                     ;
 call                : ID LPAREN args RPAREN
                          { $$ = newExpNode(CallK);
                            $$->attr.name = nameStackPop();
                            $$->child[0] = $3;
-                           $$->lineno = savedLineNo;
+                           $$->lineno = lineStackPop();
                          }
                     ;
 args                : arg_list
@@ -286,7 +304,7 @@ static int yylex(void)
 { TokenType token = getToken();
   if (token == ID)
   { nameStackPush(copyString(tokenString));
-    savedLineNo = lineno; }
+    lineStackPush(lineno); }
   return token;
 }
 
@@ -296,7 +314,13 @@ TreeNode * parse(void)
 }
 
 void nameStackPush(char *name)
-{ nameStack[stackIndex++] = name; }
+{ nameStack[nameStackIndex++] = name; }
 
 char* nameStackPop()
-{ return nameStack[--stackIndex]; }
+{ return nameStack[--nameStackIndex]; }
+
+void lineStackPush(int line)
+{ lineStack[lineStackIndex++] = line; }
+
+int lineStackPop()
+{ return lineStack[--lineStackIndex]; }
