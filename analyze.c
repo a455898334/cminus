@@ -80,7 +80,7 @@ static void insertNode( TreeNode * t)
       { case FunctionK:
           if (st_lookup(scope,t->attr.name) == -1)
           /* not yet in table, so treat as new definition */
-            st_insert(scope,t->attr.name,t->lineno,location++);
+            st_insert(scope,t->attr.name,t->type,t->lineno,location++);
           else
           /* already in table, so ignore location, 
              add line number of use only */ 
@@ -99,7 +99,7 @@ static void insertNode( TreeNode * t)
         case ArrayParamK:
           if (t->attr.name != NULL && st_lookup_excluding_parent(scope,t->attr.name) == -1)
           /* not yet in table, so treat as new definition */
-            st_insert(scope,t->attr.name,t->lineno,location++);
+            st_insert(scope,t->attr.name,t->type,t->lineno,location++);
           else if(t->attr.name != NULL)
           /* already in table, so ignore location, 
              add line number of use only */ 

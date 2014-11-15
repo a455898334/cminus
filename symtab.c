@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "symtab.h"
+#include "globals.h"
 
 /* SIZE is the size of the hash table */
 #define SIZE 211
@@ -47,6 +48,7 @@ typedef struct LineListRec
  */
 typedef struct BucketListRec
    { char * name;
+     ExpType type;
      LineList lines;
      int memloc ; /* memory location for variable */
      struct BucketListRec * next;
@@ -96,7 +98,7 @@ ScopeList getParentScope(char * scope)
  * loc = memory location is inserted only the
  * first time, otherwise ignored
  */
-void st_insert_( ScopeList scope, char * name, int lineno, int loc )
+void st_insert_( ScopeList scope, char * name, ExpType type, int lineno, int loc )
 { int h = hash(name);
   BucketList l = scope->bucket[h];
   while ((l != NULL) && (strcmp(name,l->name) != 0))
@@ -105,6 +107,7 @@ void st_insert_( ScopeList scope, char * name, int lineno, int loc )
   { l = (BucketList) malloc(sizeof(struct BucketListRec));
     l->name = name;
     l->lines = (LineList) malloc(sizeof(struct LineListRec));
+    l->type = type;
     l->lines->lineno = lineno;
     l->memloc = loc;
     l->lines->next = NULL;
@@ -119,7 +122,7 @@ void st_insert_( ScopeList scope, char * name, int lineno, int loc )
   }
 }
 
-void st_insert( char * scope, char * name, int lineno, int loc )
+void st_insert( char * scope, char * name, ExpType type, int lineno, int loc )
 { int h = hash(scope);
   ScopeList l = scopeHashTable[h];
   while ((l != NULL) && (strcmp(scope,l->name) != 0))
@@ -131,7 +134,7 @@ void st_insert( char * scope, char * name, int lineno, int loc )
     strcpy(l->name, scope);
     l->next = scopeHashTable[h];
     scopeHashTable[h] = l; }
-  st_insert_(l, name, lineno, loc);
+  st_insert_(l, name, type, lineno, loc);
 }/* st_insert */
 
 /* Function st_lookup returns the memory 
@@ -214,14 +217,15 @@ void addline( char * scope, char * name, int lineno )
  */
 void printSymTab_(FILE * listing, ScopeList scope)
 { int i;
-  fprintf(listing,"Variable Name  Location   Line Numbers\n");
-  fprintf(listing,"-------------  --------   ------------\n");
+  fprintf(listing,"Variable Name  Variable Type  Location   Line Numbers\n");
+  fprintf(listing,"-------------  -------------  --------   ------------\n");
   for (i=0;i<SIZE;++i)
   { if (scope->bucket[i] != NULL)
     { BucketList l = scope->bucket[i];
       while (l != NULL)
       { LineList t = l->lines;
         fprintf(listing,"%-14s ",l->name);
+        fprintf(listing,"%-13s ",l->type == Integer? "Integer" : "Void");
         fprintf(listing,"%-8d  ",l->memloc);
         while (t != NULL)
         { fprintf(listing,"%4d ",t->lineno);
