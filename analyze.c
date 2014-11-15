@@ -13,7 +13,7 @@
 
 /* counter for variable memory locations */
 static int location = 0;
-static char * scope = "";
+static char * scope = "~";
 
 char * getNewScope(TreeNode * t)
 { char *result = NULL;
