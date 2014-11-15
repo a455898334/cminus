@@ -169,52 +169,66 @@ static void typeError(TreeNode * t, char * message)
  * type checking at a single tree node
  */
 static void checkNode(TreeNode * t)
-{ /*switch (t->nodekind)
+{ switch (t->nodekind)
   { case ExpK:
       switch (t->kind.exp)
       { case OpK:
-          if ((t->child[0]->type != Integer) ||
-              (t->child[1]->type != Integer))
-            typeError(t,"Op applied to non-integer");
-          if ((t->attr.op == EQ) || (t->attr.op == LT))
-            t->type = Boolean;
-          else
-            t->type = Integer;
+          break;
+        case VarK:
+        case VarArrayK:
+          if (t->type == Void)
+            typeError(t, "variable can not be void type");
           break;
         case ConstK:
-        case IdK:
-          t->type = Integer;
           break;
-        default:
+        case IdK:
+          break;
+        case CallK:
+          break;
+        case AssignK:
+          //make syntax error
+          break;
+        case SingleParamK:
+          break;
+        case ArrayParamK:
           break;
       }
       break;
     case StmtK:
       switch (t->kind.stmt)
-      { case IfK:
-          if (t->child[0]->type == Integer)
-            typeError(t->child[0],"if test is not Boolean");
+      { char *tmp;
+        BucketList l;
+        case IfK:
           break;
-        case AssignK:
-          if (t->child[0]->type != Integer)
-            typeError(t->child[0],"assignment of non-integer value");
+        case FunctionK:
           break;
-        case WriteK:
-          if (t->child[0]->type != Integer)
-            typeError(t->child[0],"write of non-integer value");
+        case CompoundK:
           break;
-        case RepeatK:
-          if (t->child[1]->type == Integer)
-            typeError(t->child[1],"repeat test is not Boolean");
+        case WhileK:
           break;
-        default:
+        case ReturnK:
+          tmp = (char *)malloc(sizeof(char) * (strlen(scope) + 1));
+          strcpy(tmp, scope);
+          strtok(tmp, ":");
+          char *functionName = strtok(NULL, ":");
+          l = getBucket("~", functionName);
+          if (l == NULL)
+          { char *tmp;
+            tmp = (char *)malloc(sizeof(char) * (strlen(functionName) + strlen("there is no ") + 1));
+            sprintf(tmp, "%s%s", "there is no %s", functionName);
+            typeError(t, tmp);
+            free(tmp);
+          }
+          else if (l->type != Integer)
+            typeError(t, "Void function can not return a value");
+          free(tmp);
           break;
       }
       break;
     default:
       break;
 
-  }*/
+  }
 }
 
 /* Procedure typeCheck performs type checking 
