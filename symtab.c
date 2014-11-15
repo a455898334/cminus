@@ -239,10 +239,13 @@ void printSymTab(FILE * listing)
   for (i=0;i<SIZE;++i)
   { if (scopeHashTable[i] != NULL)
     { ScopeList l = scopeHashTable[i];
-      fprintf(listing,"Scope name : %s\n", l->name);
-      fprintf(listing,"----------------------------------\n");
-      printSymTab_(listing, l);
-      fprintf(listing,"----------------------------------\n\n\n\n");
+      while ( l != NULL)
+      { fprintf(listing,"Scope name : %s\n", l->name);
+        fprintf(listing,"----------------------------------\n");
+        printSymTab_(listing, l);
+        fprintf(listing,"----------------------------------\n\n\n\n");
+        l = l->next;
+      }
     }
   }
 } /* printSymTab */
