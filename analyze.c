@@ -100,7 +100,7 @@ static void insertNode( TreeNode * t)
           if (t->attr.name != NULL && st_lookup_excluding_parent(scope,t->attr.name) == -1)
           /* not yet in table, so treat as new definition */
             st_insert(scope,t->attr.name,t->lineno,location++);
-          else
+          else if(t->attr.name != NULL)
           /* already in table, so ignore location, 
              add line number of use only */ 
             //st_insert(t->attr.name,t->lineno,0);
