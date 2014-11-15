@@ -80,7 +80,7 @@ typedef struct treeNode
      union { TokenType op;
              int val;
              char * name;
-             int withElse } attr;
+             int withElse; } attr;
      ExpType type; /* for type checking of exps */
    } TreeNode;
 
