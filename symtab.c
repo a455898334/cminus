@@ -104,19 +104,19 @@ void st_insert( char * scope, char * name, ExpType type, int lineno, int loc )
 /* Function st_lookup returns the memory 
  * location of a variable or -1 if not found
  */
-int st_lookup_ ( ScopeList scope, char * name )
+BucketList st_lookup_ ( ScopeList scope, char * name )
 { int h = hash(name);
   if (scope == NULL)
-    return -1;
+    return NULL;
   BucketList l = scope->bucket[h];
   while ((l != NULL) && (strcmp(name,l->name) != 0))
     l = l->next;
-  if (l == NULL) return -1;
-  else return l->memloc;
+  if (l == NULL) return NULL;
+  else return l;
 }
 
-int st_lookup ( char * scope, char * name )
-{ int result;
+BucketList st_lookup ( char * scope, char * name )
+{ BucketList result;
   int h = hash(scope);
   ScopeList l = scopeHashTable[h];
   while ((l != NULL) && (strcmp(scope,l->name) != 0))
@@ -124,21 +124,21 @@ int st_lookup ( char * scope, char * name )
   if (l == NULL)
   { ScopeList parent = getParentScope(scope);
     if (parent == NULL)
-      return -1;
+      return NULL;
     return st_lookup(parent->name, name);
   }
 
   result = st_lookup_(l, name);
-  if (result == -1) //lookup in parent
-  { ScopeList parent = l->parent;
+  if (result == NULL) //lookup in parent
+  { ScopeList parent = getParentScope(scope);
     if (parent == NULL) //if there is no parent
-      return -1;
+      return NULL;
     return st_lookup(parent->name, name);
   }
   else return result;
 }
 
-int st_lookup_excluding_parent ( char * scope, char * name )
+BucketList st_lookup_excluding_parent ( char * scope, char * name )
 { int result;
   int h = hash(scope);
   ScopeList l = scopeHashTable[h];
@@ -146,7 +146,7 @@ int st_lookup_excluding_parent ( char * scope, char * name )
     l = l->next;
 
   if (l == NULL)
-      return -1;
+      return NULL;
   
   return st_lookup_(l, name);
 }
@@ -173,17 +173,6 @@ void addline( char * scope, char * name, int lineno )
   lineList->next = (LineList) malloc(sizeof(struct LineListRec));
   lineList->next->lineno = lineno;
   lineList->next->next = NULL;
-}
-
-BucketList getBucket(char * scope, char * name)
-{ BucketList result;
-  ScopeList l = scopeHashTable[hash(scope)];
-  while ((l != NULL) && (strcmp(scope, l->name) != 0))
-    l = l->next;
-  result = l->bucket[hash(name)];
-  while ((result != NULL) && (strcmp(name, result->name) != 0))
-    result = result->next;
-  return result;
 }
 
 /* Procedure printSymTab prints a formatted 

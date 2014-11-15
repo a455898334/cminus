@@ -78,7 +78,7 @@ static void insertNode( TreeNode * t)
   { case StmtK:
       switch (t->kind.stmt)
       { case FunctionK:
-          if (st_lookup(scope,t->attr.name) == -1)
+          if (st_lookup(scope,t->attr.name) == NULL)
           /* not yet in table, so treat as new definition */
             st_insert(scope,t->attr.name,t->type,t->lineno,location++);
           else
@@ -97,7 +97,7 @@ static void insertNode( TreeNode * t)
         case VarArrayK:
         case SingleParamK:
         case ArrayParamK:
-          if (t->attr.name != NULL && st_lookup_excluding_parent(scope,t->attr.name) == -1)
+          if (t->attr.name != NULL && st_lookup_excluding_parent(scope,t->attr.name) == NULL)
           /* not yet in table, so treat as new definition */
             st_insert(scope,t->attr.name,t->type,t->lineno,location++);
           else if(t->attr.name != NULL)
@@ -108,7 +108,7 @@ static void insertNode( TreeNode * t)
           break;
         case IdK:
         case CallK:
-          if (st_lookup(scope,t->attr.name) == -1)
+          if (st_lookup(scope,t->attr.name) == NULL)
             fprintf(listing, "error:%d: %s is not declared\n", t->lineno, t->attr.name);
           else
             addline(scope,t->attr.name,t->lineno,0);
@@ -172,7 +172,8 @@ static void checkNode(TreeNode * t)
 { switch (t->nodekind)
   { case ExpK:
       switch (t->kind.exp)
-      { case OpK:
+      { BucketList bucket;
+        case OpK:
           break;
         case VarK:
         case VarArrayK:
@@ -186,7 +187,13 @@ static void checkNode(TreeNode * t)
         case CallK:
           break;
         case AssignK:
-          //make syntax error
+          if (t->child[1]->kind.exp == IdK || t->child[1]->kind.exp == CallK)
+          { bucket = st_lookup(scope, t->child[1]->attr.name);
+            if (bucket->type != Integer)
+              typeError(t->child[1], "rvalue must be instger type");
+          }
+          else if (t->child[1]->type != Integer)
+            typeError(t->child[1], "rvalue must be instger type");
           break;
         case SingleParamK:
           break;
@@ -211,7 +218,7 @@ static void checkNode(TreeNode * t)
           strcpy(tmp, scope);
           strtok(tmp, ":");
           char *functionName = strtok(NULL, ":");
-          l = getBucket("~", functionName);
+          l = st_lookup("~", functionName);
           if (l == NULL)
           { char *tmp;
             tmp = (char *)malloc(sizeof(char) * (strlen(functionName) + strlen("there is no ") + 1));

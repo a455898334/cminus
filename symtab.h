@@ -56,15 +56,13 @@ void st_insert( char * scope, char * name, ExpType type, int lineno, int loc );
 /* Function st_lookup returns the memory 
  * location of a variable or -1 if not found
  */
-int st_lookup ( char * scope, char * name );
-int st_lookup_excluding_parent ( char * scope, char * name );
+BucketList st_lookup ( char * scope, char * name );
+BucketList st_lookup_excluding_parent ( char * scope, char * name );
 
 /* Procedure printSymTab prints a formatted 
  * listing of the symbol table contents 
  * to the listing file
  */
 void printSymTab(FILE * listing);
-
-BucketList getBucket(char * scope, char * name);
 
 #endif
