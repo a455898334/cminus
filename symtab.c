@@ -93,6 +93,7 @@ void st_insert( char * scope, char * name, ExpType type, int lineno, int loc )
     l = l->next;
   if (l == NULL) /* scope not yet in table */
   { l = (ScopeList) malloc(sizeof(struct ScopeListRec));
+    memset(l, 0, sizeof(struct ScopeListRec));
     l->parent = getParentScope(scope);
     l->name = (char *)malloc(sizeof(char) * (strlen(scope) + 1));
     strcpy(l->name, scope);
