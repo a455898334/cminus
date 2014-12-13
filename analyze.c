@@ -47,13 +47,16 @@ static void traverse( TreeNode * t,
     preProc(t);
     { int i;
       char * scopeBackup = scope;
+      int locationBackup = location;
       scope = getNewScope(t);
+      location = 0;
 
       for (i=0; i < MAXCHILDREN; i++)
         traverse(t->child[i],preProc,postProc);
 
       free(scope);
       scope = scopeBackup;
+      location = locationBackup;
     }
     postProc(t);
     traverse(t->sibling,preProc,postProc);
