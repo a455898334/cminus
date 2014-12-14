@@ -101,8 +101,12 @@ static void insertNode( TreeNode * t)
         case SingleParamK:
         case ArrayParamK:
           if (t->attr.name != NULL && st_lookup_excluding_parent(scope,t->attr.name) == NULL)
+          {
           /* not yet in table, so treat as new definition */
             st_insert(scope,t->attr.name,t->type,t->lineno,location++);
+            if(t->kind.exp == VarArrayK)
+              location += t->child[0]->attr.val - 1;
+          }
           else if(t->attr.name != NULL)
           /* already in table, so ignore location, 
              add line number of use only */ 
