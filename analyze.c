@@ -166,6 +166,10 @@ void buildSymtab(TreeNode * syntaxTree)
   { fprintf(listing,"\nSymbol table:\n\n");
     printSymTab(listing);
   }
+  if (st_lookup("~", "main") == NULL)
+  { fprintf(listing, "There is no main function");
+    Error = TRUE;
+  }
 }
 
 static void typeError(TreeNode * t, char * message)
