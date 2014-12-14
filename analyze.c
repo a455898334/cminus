@@ -114,6 +114,7 @@ static void insertNode( TreeNode * t)
             fprintf(listing, "error:%d: %s is already declared\n", t->lineno, t->attr.name);
           break;
         case IdK:
+        case IdArrayK:
         case CallK:
           if (st_lookup(scope,t->attr.name) == NULL)
             fprintf(listing, "error:%d: %s is not declared\n", t->lineno, t->attr.name);
@@ -191,10 +192,12 @@ static void checkNode(TreeNode * t)
           break;
         case IdK:
           break;
+        case IdArrayK:
+          break;
         case CallK:
           break;
         case AssignK:
-          if (t->child[1]->kind.exp == IdK || t->child[1]->kind.exp == CallK)
+          if (t->child[1]->kind.exp == IdK || t->child[1]->kind.exp == CallK || t->child[1]->kind.exp == IdArrayK)
           { bucket = st_lookup(scope, t->child[1]->attr.name);
             if (bucket->type != Integer)
               typeError(t->child[1], "rvalue must be instger type");

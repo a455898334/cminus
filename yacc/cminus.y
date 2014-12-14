@@ -199,7 +199,7 @@ var                 : ID
                            $$->lineno = lineStackPop();
                          }
                     | ID LBRACE expression RBRACE
-                         { $$ = newExpNode(IdK);
+                         { $$ = newExpNode(IdArrayK);
                            $$->attr.name = nameStackPop();
                            $$->child[0] = $3;
                            $$->lineno = lineStackPop();
