@@ -199,6 +199,21 @@ static void cGen( TreeNode * tree)
   }
 }
 
+int getSizeOfGlobal(TreeNode * syntaxTree)
+{
+   int result = 0;
+   TreeNode *tree = syntaxTree;
+   while(tree != NULL)
+   {
+     if(tree->nodekind == ExpK && tree->kind.stmt == VarArrayK)
+       result += tree->child[0]->attr.val;
+     else
+       result++;
+     tree = tree->sibling;
+   }
+   return result;
+}
+
 /**********************************************/
 /* the primary function of the code generator */
 /**********************************************/
