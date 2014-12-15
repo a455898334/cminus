@@ -16,8 +16,8 @@ ifeq ($(UNAME), Darwin)
 else
 	fl = -lfl
 endif
-cminus: main.o util.o scan.o parse.o symtab.o analyze.o
-	$(CC) $(CFLAGS) main.o util.o scan.o parse.o symtab.o analyze.o -o cminus
+cminus: $(OBJS)
+	$(CC) $(CFLAGS) $(OBJS) -o cminus
 
 parse.c y.tab.h: yacc/cminus.y
 	yacc -d -t -v yacc/cminus.y
