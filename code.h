@@ -23,6 +23,8 @@
  */
 #define gp 5
 
+#define fp 4
+
 /* accumulator */
 #define  ac 0
 
