@@ -24,6 +24,7 @@ int forFunctionTable = 0;
 int locMain;
 /* prototype for internal recursive code generator */
 static void cGen (TreeNode * tree);
+static void insertFunction(int functionLocation, char *name);
 
 /* Procedure genStmt generates code at a statement node */
 static void genStmt( TreeNode * tree)
@@ -213,4 +214,17 @@ void codeGen(TreeNode * syntaxTree, char * codefile)
    /* finish */
    emitComment("End of execution.");
    emitRO("HALT",0,0,0,"");
+
+void insertFunction(int functionLocation, char *name)
+{
+   char comment[128];
+   int memloc = st_get_location("~", name);
+   emitBackup(forFunctionTable);
+   forFunctionTable += 2;
+   sprintf(comment, "function %s is at %d", name, memloc);
+   if (TraceCode) emitComment(comment);
+   sprintf(comment, "load function location(%d)", functionLocation);
+   emitRM("LDC", ac, functionLocation, 0, comment);
+   emitRM("ST", ac, memloc, gp, "add into memory");
+   emitRestore();
 }
