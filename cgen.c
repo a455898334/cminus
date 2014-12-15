@@ -288,4 +288,11 @@ int getLocalNameOffset(char *name)
    return -1;
 }
 
+int getParameterOffset(char *name)
+{
+   int i;
+   for(i = parameterStackIndex; i< 1024; i++)
+     if(parameterStack[i] != 0 && strcmp(parameterStack[i], name) == 0)
+       return i - parameterStackIndex;
+   return -1;
 }
