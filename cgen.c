@@ -17,7 +17,6 @@
    stored, and incremeted when loaded again
 */
 static int tmpOffset = 0;
-static int tmpSize = 0;
 static int numberOfArguments = 0;
 
 int forFunctionTable = 0;
@@ -42,6 +41,7 @@ static void genStmt( TreeNode * tree)
   int savedLoc1,savedLoc2,currentLoc;
   int loc;
   char comment[128];
+  int tmpSize = 0;
   switch (tree->kind.stmt) {
 
       case IfK :
