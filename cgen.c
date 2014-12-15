@@ -17,6 +17,8 @@
    stored, and incremeted when loaded again
 */
 static int tmpOffset = 0;
+static int tmpSize = 0;
+static int numberOfArguments = 0;
 
 /* prototype for internal recursive code generator */
 static void cGen (TreeNode * tree);
