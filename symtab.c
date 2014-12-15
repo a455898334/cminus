@@ -139,6 +139,15 @@ BucketList st_lookup ( char * scope, char * name )
   else return result;
 }
 
+int st_get_location(char *scope, char *name)
+{ BucketList bucketList = NULL;
+  bucketList = st_lookup(scope, name);
+
+  if(bucketList == NULL)
+    return -1;
+  return bucketList->memloc;
+}
+
 BucketList st_lookup_excluding_parent ( char * scope, char * name )
 { int result;
   int h = hash(scope);
