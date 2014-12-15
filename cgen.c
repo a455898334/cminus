@@ -25,9 +25,15 @@ int locMain;
 
 static char* localNameStack[1024];
 static int localNameStackIndex = 1024;
+static char* parameterStack[1024];
+static int parameterStackIndex = 1024;
+
 /* prototype for internal recursive code generator */
 static void cGen (TreeNode * tree);
+static int pushArguments(int depth, TreeNode * tree);
+static void pushParameters(char *name);
 static int getLocalNameOffset(char *name);
+static int getParameterOffset(char *name);
 static void insertFunction(int functionLocation, char *name);
 
 /* Procedure genStmt generates code at a statement node */
@@ -218,6 +224,46 @@ void codeGen(TreeNode * syntaxTree, char * codefile)
    /* finish */
    emitComment("End of execution.");
    emitRO("HALT",0,0,0,"");
+
+int pushArguments(int depth, TreeNode * tree)
+{
+   if(tree == NULL)
+    return depth;
+   depth = pushArguments(depth + 1, tree->sibling);
+   genExp(tree);
+   //parameterStack[--parameterStackIndex] = tree->attr.name;
+   //emitRM("LDC", ac1, 1, 0, "ac1 = 1");
+   //emitRO("SUB", mp, mp, ac1, "mp = mp - ac1");
+   emitRM("ST", ac, --tmpOffset, mp, "op: push argument(reverse order)");
+   return depth;
+}
+
+void pushParameters(char *functionName)
+{
+   char* parameters[SIZE];
+   char tmp[128];
+   int max = 0;
+   sprintf(tmp, "~:%s", functionName);
+   ScopeList scope = getScope(tmp);
+   if(scope == NULL)
+     return;
+   int i;
+   for (i=0;i<SIZE;++i)
+   { if (scope->bucket[i] != NULL)
+     { BucketList l = scope->bucket[i];
+       while (l != NULL)
+       {
+         if(max < l->memloc)
+           max = l->memloc;
+         parameters[l->memloc] = l->name;
+         l = l->next;
+       }
+     }
+   }
+
+   for (i=max; i>=0;i--)
+     parameterStack[--parameterStackIndex] = parameters[i];
+}
 
 void insertFunction(int functionLocation, char *name)
 {
