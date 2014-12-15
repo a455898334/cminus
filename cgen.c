@@ -20,6 +20,8 @@ static int tmpOffset = 0;
 static int tmpSize = 0;
 static int numberOfArguments = 0;
 
+int forFunctionTable = 0;
+int locMain;
 /* prototype for internal recursive code generator */
 static void cGen (TreeNode * tree);
 
