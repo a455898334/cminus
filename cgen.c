@@ -22,8 +22,12 @@ static int numberOfArguments = 0;
 
 int forFunctionTable = 0;
 int locMain;
+
+static char* localNameStack[1024];
+static int localNameStackIndex = 1024;
 /* prototype for internal recursive code generator */
 static void cGen (TreeNode * tree);
+static int getLocalNameOffset(char *name);
 static void insertFunction(int functionLocation, char *name);
 
 /* Procedure genStmt generates code at a statement node */
@@ -227,4 +231,15 @@ void insertFunction(int functionLocation, char *name)
    emitRM("LDC", ac, functionLocation, 0, comment);
    emitRM("ST", ac, memloc, gp, "add into memory");
    emitRestore();
+}
+
+int getLocalNameOffset(char *name)
+{
+   int i;
+   for(i = localNameStackIndex; i < 1024; i++)
+     if(localNameStack[i] != 0 && strcmp(localNameStack[i], name) == 0)
+       return i - localNameStackIndex;
+   return -1;
+}
+
 }
