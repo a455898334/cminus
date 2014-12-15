@@ -57,6 +57,13 @@ ScopeList getParentScope(char * scope)
   return l;
 }
 
+ScopeList getScope(char * scope)
+{ ScopeList l = scopeHashTable[hash(scope)];
+  while ((l != NULL) && (strcmp(scope, l->name) != 0))
+    l = l->next;
+  return l;
+}
+
 /* Procedure st_insert_ inserts line numbers and
  * memory locations into the symbol table
  * loc = memory location is inserted only the

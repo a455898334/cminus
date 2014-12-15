@@ -59,6 +59,7 @@ void st_insert( char * scope, char * name, ExpType type, int lineno, int loc );
 BucketList st_lookup ( char * scope, char * name );
 BucketList st_lookup_excluding_parent ( char * scope, char * name );
 int st_get_location( char * scope, char * name );
+ScopeList getScope(char * scope);
 
 /* Procedure printSymTab prints a formatted 
  * listing of the symbol table contents 
