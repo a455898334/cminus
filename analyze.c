@@ -159,7 +159,7 @@ void insertBuiltinFunctions(TreeNode ** syntaxTree)
 /* Function buildSymtab constructs the symbol 
  * table by preorder traversal of the syntax tree
  */
-void buildSymtab(TreeNode * syntaxTree)
+TreeNode* buildSymtab(TreeNode * syntaxTree)
 { insertBuiltinFunctions(&syntaxTree);
   traverse(syntaxTree,insertNode,nullProc);
   if (TraceAnalyze)
@@ -170,6 +170,7 @@ void buildSymtab(TreeNode * syntaxTree)
   { fprintf(listing, "There is no main function");
     Error = TRUE;
   }
+  return syntaxTree;
 }
 
 static void typeError(TreeNode * t, char * message)
