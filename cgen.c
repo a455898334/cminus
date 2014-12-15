@@ -30,7 +30,7 @@ static int parameterStackIndex = 1024;
 /* prototype for internal recursive code generator */
 static void cGen (TreeNode * tree);
 static int pushArguments(int depth, TreeNode * tree);
-static void pushParameters(char *name);
+static int pushParameters(char *name);
 static int getLocalNameOffset(char *name);
 static int getParameterOffset(char *name);
 static void insertFunction(int functionLocation, char *name);
@@ -450,7 +450,7 @@ int pushArguments(int depth, TreeNode * tree)
    return depth;
 }
 
-void pushParameters(char *functionName)
+int pushParameters(char *functionName)
 {
    char* parameters[SIZE];
    char tmp[128];
@@ -475,6 +475,8 @@ void pushParameters(char *functionName)
 
    for (i=max; i>=0;i--)
      parameterStack[--parameterStackIndex] = parameters[i];
+
+   return max + 1;
 }
 
 void insertFunction(int functionLocation, char *name)
