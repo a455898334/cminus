@@ -235,10 +235,17 @@ void codeGen(TreeNode * syntaxTree, char * codefile)
    emitRM("ST",ac,0,ac,"clear location 0");
    emitComment("End of standard prelude.");
    /* generate code for TINY program */
+   forFunctionTable = emitSkip(getSizeOfGlobal(syntaxTree)*2 + 1);
    cGen(syntaxTree);
+   /* jump to main */
+   int memloc = st_get_location("~", "main");
+   emitBackup(forFunctionTable);
+   emitRM("LDC", pc, locMain, 0, "jump to main");
+   emitRestore();
    /* finish */
    emitComment("End of execution.");
-   emitRO("HALT",0,0,0,"");
+   emitRO("HALT",0,0,0,"done");
+}
 
 int pushArguments(int depth, TreeNode * tree)
 {
