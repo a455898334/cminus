@@ -34,14 +34,18 @@ static int pushParameters(char *name);
 static int getLocalNameOffset(char *name);
 static int getParameterOffset(char *name);
 static void insertFunction(int functionLocation, char *name);
+static void genExp( TreeNode * tree);
+static void genStmt( TreeNode * tree);
 
 /* Procedure genStmt generates code at a statement node */
-static void genStmt( TreeNode * tree)
+void genStmt( TreeNode * tree)
 { TreeNode * p1, * p2, * p3;
   int savedLoc1,savedLoc2,currentLoc;
   int loc;
   char comment[128];
   int tmpSize = 0;
+  if(tree == NULL)
+    return;
   switch (tree->kind.stmt) {
 
       case IfK :
@@ -50,11 +54,11 @@ static void genStmt( TreeNode * tree)
          p2 = tree->child[1] ;
          p3 = tree->child[2] ;
          /* generate code for test expression */
-         cGen(p1);
+         genExp(p1);
          savedLoc1 = emitSkip(1) ;
          emitComment("if: jump to else belongs here");
          /* recurse on then part */
-         cGen(p2);
+         genStmt(p2);
          savedLoc2 = emitSkip(1) ;
          emitComment("if: jump to end belongs here");
          currentLoc = emitSkip(0) ;
@@ -62,7 +66,7 @@ static void genStmt( TreeNode * tree)
          emitRM_Abs("JEQ",ac,currentLoc,"if: jmp to else");
          emitRestore() ;
          /* recurse on else part */
-         cGen(p3);
+         genStmt(p3);
          currentLoc = emitSkip(0) ;
          emitBackup(savedLoc2) ;
          emitRM_Abs("LDA",pc,currentLoc,"jmp to end") ;
@@ -86,8 +90,9 @@ static void genStmt( TreeNode * tree)
          }
          else
          {
-           pushParameters(tree->attr.name);
-           cGen(tree->child[1]);
+           int numberOfParameters = pushParameters(tree->attr.name);
+           genStmt(tree->child[1]);
+           parameterStackIndex += numberOfParameters;
          }
          emitRM("LDA", mp, 0, fp, "copy fp to sp");
          emitRM("LD", fp, 0, mp, "pop fp");
@@ -122,6 +127,7 @@ static void genStmt( TreeNode * tree)
          emitRM("LDC", ac1, tmpSize, 0, "ac1 = sum of size of local variables");
          emitRO("SUB", mp, mp, ac1, "allocate local variables");
          cGen(p2);
+         emitRM("LDC", ac1, tmpSize, 0, "ac1 = sum of size of local variables");
          emitRO("ADD", mp, mp, ac1, "free local variable");
          localNameStackIndex += tmpSize;
          sprintf(comment, "<- compound %d end", tree->lineno);
@@ -133,21 +139,21 @@ static void genStmt( TreeNode * tree)
          p2 = tree->child[1];
          savedLoc1 = emitSkip(0);
          if (TraceCode) emitComment("while : test expression start");
-         cGen(p1);
+         genExp(p1);
          if (TraceCode) emitComment("while : test expression end");
          savedLoc2 = emitSkip(1);
          if (TraceCode) emitComment("while : body start");
-         cGen(p2);
+         genStmt(p2);
          if (TraceCode) emitComment("while : body end");
          emitRM("LDC", pc, savedLoc1, 0, "unconditional jump");
          currentLoc = emitSkip(0);
          emitBackup(savedLoc2);
-         emitRM_Abs("JNE", ac, currentLoc, "while : false");
+         emitRM_Abs("JEQ", ac, currentLoc, "while : false");
          emitRestore();
          break;
       case ReturnK:
          if(tree->child[0] != NULL)
-           cGen(tree->child[0]);
+           genExp(tree->child[0]);
          break;
       default:
          break;
@@ -155,11 +161,13 @@ static void genStmt( TreeNode * tree)
 } /* genStmt */
 
 /* Procedure genExp generates code at an expression node */
-static void genExp( TreeNode * tree)
+void genExp( TreeNode * tree)
 { int loc, depth, arrayIndex;
   TreeNode * p1, * p2;
   char comment[128];
   int isArray = 0;
+  if(tree == NULL)
+    return;
   switch (tree->kind.exp) {
 
     case ConstK :
@@ -171,14 +179,13 @@ static void genExp( TreeNode * tree)
       break; /* ConstK */
     
     case IdArrayK :
+      if (TraceCode) emitComment("-> array") ;
       isArray = 1;
+      emitRM("ST",ac,--tmpOffset,mp,"op: push ac"); 
+      genExp(tree->child[0]);
+      emitRM("LDA", ac1, 0, ac, "save index to ac1");
+      emitRM("LD",ac,tmpOffset++,mp,"op: load ac");
     case IdK :
-      if (isArray == 1)
-      {
-         if (TraceCode) emitComment("-> array") ;
-         cGen(tree->child[0]);
-         emitRM("LDA", ac1, 0, ac, "save index");
-      }
       if (TraceCode) emitComment("-> Id") ;
       loc = getLocalNameOffset(tree->attr.name);
       if (loc == -1) //parameter, global
@@ -212,13 +219,13 @@ static void genExp( TreeNode * tree)
          p2 = tree->child[1];
          /* gen code for ac = left arg */
          if (TraceCode) emitComment("-> left") ;
-         cGen(p1);
+         genExp(p1);
          if (TraceCode) emitComment("<- left") ;
          /* gen code to push left operand */
          emitRM("ST",ac,--tmpOffset,mp,"op: push left");
          /* gen code for ac = right operand */
          if (TraceCode) emitComment("-> right") ;
-         cGen(p2);
+         genExp(p2);
          if (TraceCode) emitComment("<- right") ;
          /* now load left operand */
          emitRM("LD",ac1,tmpOffset++,mp,"op: load left");
@@ -317,14 +324,9 @@ static void genExp( TreeNode * tree)
     case AssignK:
       sprintf(comment, "-> assign to %s", tree->child[0]->attr.name);
       if (TraceCode) emitComment(comment) ;
-      if (tree->child[0]->kind.exp == IdArrayK)
-      {
-        cGen(tree->child[0]->child[0]);
-        emitRM("LDA", ac1, 0, ac, "get index");
-      }
       /* generate code for rhs */
       if (TraceCode) emitComment("-> generate code for rhs") ;
-      cGen(tree->child[1]);
+      genExp(tree->child[1]);
       if (TraceCode) emitComment("<- generate code for rhs end") ;
       /* now store value */
       if (TraceCode) emitComment("-> store value start") ;
@@ -332,8 +334,10 @@ static void genExp( TreeNode * tree)
       {
         isArray  = 1;
         if (TraceCode) emitComment("-> array") ;
-        cGen(tree->child[0]);
-        emitRM("LDA", ac1, 0, ac, "save index");
+        emitRM("ST",ac,--tmpOffset,mp,"op: push ac");        
+        genExp(tree->child[0]->child[0]);
+        emitRM("LDA", ac1, 0, ac, "save index to ac1");
+        emitRM("LD",ac,tmpOffset++,mp,"op: load ac");
       }
       loc = getLocalNameOffset(tree->child[0]->attr.name);
       if (loc == -1) //parameter, global
