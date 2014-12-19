@@ -69,7 +69,7 @@ ScopeList getScope(char * scope)
  * loc = memory location is inserted only the
  * first time, otherwise ignored
  */
-void st_insert_( ScopeList scope, char * name, ExpType type, int lineno, int loc )
+void st_insert_( ScopeList scope, char * name, ExpType type, int lineno, int loc, int isArray )
 { int h = hash(name);
   BucketList l = scope->bucket[h];
   while ((l != NULL) && (strcmp(name,l->name) != 0))
@@ -83,6 +83,7 @@ void st_insert_( ScopeList scope, char * name, ExpType type, int lineno, int loc
     l->memloc = loc;
     l->lines->next = NULL;
     l->next = scope->bucket[h];
+    l->isArray = isArray;
     scope->bucket[h] = l; }
   else /* found in table, so just add line number */
   { LineList t = l->lines;
@@ -93,7 +94,7 @@ void st_insert_( ScopeList scope, char * name, ExpType type, int lineno, int loc
   }
 }
 
-void st_insert( char * scope, char * name, ExpType type, int lineno, int loc )
+void st_insert( char * scope, char * name, ExpType type, int lineno, int loc, int isArray )
 { int h = hash(scope);
   ScopeList l = scopeHashTable[h];
   while ((l != NULL) && (strcmp(scope,l->name) != 0))
@@ -106,7 +107,7 @@ void st_insert( char * scope, char * name, ExpType type, int lineno, int loc )
     strcpy(l->name, scope);
     l->next = scopeHashTable[h];
     scopeHashTable[h] = l; }
-  st_insert_(l, name, type, lineno, loc);
+  st_insert_(l, name, type, lineno, loc, isArray);
 }/* st_insert */
 
 /* Function st_lookup returns the memory 
@@ -166,6 +167,13 @@ BucketList st_lookup_excluding_parent ( char * scope, char * name )
       return NULL;
   
   return st_lookup_(l, name);
+}
+
+int checkArray(char *scope, char *name)
+{ BucketList bucketList = st_lookup(scope, name);
+  if(bucketList == NULL)
+    return -1;
+  return bucketList->isArray;
 }
 
 void addline( char * scope, char * name, int lineno )

@@ -30,6 +30,7 @@ typedef struct LineListRec
 typedef struct BucketListRec
    { char * name;
      ExpType type;
+     int isArray;
      LineList lines;
      int memloc ; /* memory location for variable */
      struct BucketListRec * next;
@@ -51,7 +52,7 @@ typedef struct ScopeListRec
  * loc = memory location is inserted only the
  * first time, otherwise ignored
  */
-void st_insert( char * scope, char * name, ExpType type, int lineno, int loc );
+void st_insert( char * scope, char * name, ExpType type, int lineno, int loc, int isArray );
 
 /* Function st_lookup returns the memory 
  * location of a variable or -1 if not found
@@ -60,6 +61,7 @@ BucketList st_lookup ( char * scope, char * name );
 BucketList st_lookup_excluding_parent ( char * scope, char * name );
 int st_get_location( char * scope, char * name );
 ScopeList getScope(char * scope);
+int checkArray(char *scope, char *name);
 
 /* Procedure printSymTab prints a formatted 
  * listing of the symbol table contents 
