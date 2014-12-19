@@ -165,7 +165,6 @@ void genExp( TreeNode * tree)
 { int loc, depth, arrayIndex;
   TreeNode * p1, * p2;
   char comment[128];
-  int isArray = 0;
   if(tree == NULL)
     return;
   switch (tree->kind.exp) {
@@ -343,7 +342,6 @@ void genExp( TreeNode * tree)
       if (TraceCode) emitComment("-> store value start") ;
       if (tree->child[0]->kind.exp == IdArrayK)
       {
-        isArray  = 1;
         if (TraceCode) emitComment("-> array") ;
         emitRM("ST",ac,--tmpOffset,mp,"op: push ac");        
         genExp(tree->child[0]->child[0]);
@@ -382,21 +380,14 @@ void genExp( TreeNode * tree)
         if (loc == -1)
         {
           loc = st_get_location("~", tree->child[0]->attr.name);
-          //if(isArray == 1) emitRO("ADD", gp, gp, ac1, "to access array");
           emitRM("ST", ac, loc, gp, "assign: store value");
-          //if(isArray == 1) emitRO("SUB", gp, gp, ac1, "to access array");
         }
         else
-        {
-          //if(isArray == 1) emitRO("ADD", fp, fp, ac1, "to access array");
           emitRM("ST", ac, loc + 1, fp, "assign: store value");
-          //if(isArray == 1) emitRO("SUB", fp, fp, ac1, "to access array");
         }
       }
       else
-      { //if(isArray == 1) emitRO("ADD", mp, mp, ac1, "to access array");
         emitRM("ST", ac, loc, mp, "assign: store value");
-        //if(isArray == 1) emitRO("SUB", mp, mp, ac1, "to access array");
       }
       if (TraceCode) emitComment("<- store value end") ;
       if (TraceCode)  emitComment("<- assign") ;
