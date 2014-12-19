@@ -77,13 +77,14 @@ static void nullProc(TreeNode * t)
  * the symbol table 
  */
 static void insertNode( TreeNode * t)
-{ switch (t->nodekind)
+{ int isArray = 0;
+  switch (t->nodekind)
   { case StmtK:
       switch (t->kind.stmt)
       { case FunctionK:
           if (st_lookup(scope,t->attr.name) == NULL)
           /* not yet in table, so treat as new definition */
-            st_insert(scope,t->attr.name,t->type,t->lineno,location++);
+            st_insert(scope,t->attr.name,t->type,t->lineno,location++, isArray);
           else
           /* already in table, so ignore location, 
              add line number of use only */ 
@@ -96,14 +97,15 @@ static void insertNode( TreeNode * t)
       break;
     case ExpK:
       switch (t->kind.exp)
-      { case VarK:
-        case VarArrayK:
+      { case VarArrayK:
+          isArray = 1;
+        case VarK:
         case SingleParamK:
         case ArrayParamK:
           if (t->attr.name != NULL && st_lookup_excluding_parent(scope,t->attr.name) == NULL)
           {
           /* not yet in table, so treat as new definition */
-            st_insert(scope,t->attr.name,t->type,t->lineno,location++);
+            st_insert(scope,t->attr.name,t->type,t->lineno,location++, isArray);
             if(t->kind.exp == VarArrayK)
               location += t->child[0]->attr.val - 1;
           }
@@ -119,7 +121,11 @@ static void insertNode( TreeNode * t)
           if (st_lookup(scope,t->attr.name) == NULL)
             fprintf(listing, "error:%d: %s is not declared\n", t->lineno, t->attr.name);
           else
+          {
+            if(checkArray(scope, t->attr.name) == 1)
+              t->kind.exp = IdArrayK;
             addline(scope,t->attr.name,t->lineno,0);
+          }
           break;
         default:
           break;
