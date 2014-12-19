@@ -180,11 +180,31 @@ void genExp( TreeNode * tree)
     
     case IdArrayK :
       if (TraceCode) emitComment("-> array") ;
-      isArray = 1;
-      emitRM("ST",ac,--tmpOffset,mp,"op: push ac"); 
-      genExp(tree->child[0]);
-      emitRM("LDA", ac1, 0, ac, "save index to ac1");
-      emitRM("LD",ac,tmpOffset++,mp,"op: load ac");
+      emitRM("LDC", ac1, 0, 0, "");
+      loc = getLocalNameOffset(tree->attr.name);
+      if(loc == -1)
+      {
+        loc = getParameterOffset(tree->attr.name);
+        if(loc == -1)
+        {
+          loc = st_get_location("~", tree->attr.name);
+          emitRM("LDA", ac, loc, gp, "id : load address to ac");
+        }
+        else
+          emitRM("LD", ac, loc + 1, fp, "id : load address to ac");
+      }
+      else
+        emitRM("LDA", ac, loc, mp, "id : load address to ac");
+      if(tree->child[0] != NULL)
+      {
+        emitRM("ST",ac,--tmpOffset,mp,"op: push ac"); 
+        genExp(tree->child[0]);
+        emitRM("LDA", ac1, 0, ac, "save index to ac1");
+        emitRM("LD",ac,tmpOffset++,mp, "op: load ac");
+        emitRO("ADD", ac1, ac1, ac, "get location");
+        emitRM("LD", ac, 0, ac1, "get value");
+      }
+      break;
     case IdK :
       if (TraceCode) emitComment("-> Id") ;
       loc = getLocalNameOffset(tree->attr.name);
@@ -194,22 +214,13 @@ void genExp( TreeNode * tree)
         if (loc == -1)
         {
           loc = st_get_location("~", tree->attr.name);
-          if (isArray == 1) emitRO("ADD", gp, gp, ac1, "to access array");
           emitRM("LD", ac, loc, gp, "id: load value to ac");
-          if (isArray == 1) emitRO("SUB", gp, gp, ac1, "to access array");
         }
         else
-        {
-          if (isArray == 1) emitRO("ADD", fp, fp, ac1, "to access array");
           emitRM("LD", ac, loc + 1, fp, "id: load value to ac");
-          if (isArray == 1) emitRO("SUB", fp, fp, ac1, "to access array");
-        }
       }
       else
-      { if (isArray == 1) emitRO("ADD", mp, mp, ac1, "to access array");
         emitRM("LD", ac, loc, mp, "id: load value to ac");
-        if (isArray == 1) emitRO("SUB", mp, mp, ac1, "to access array");
-      }
       if (TraceCode)  emitComment("<- Id") ;
       break; /* IdK */
 
@@ -337,7 +348,32 @@ void genExp( TreeNode * tree)
         emitRM("ST",ac,--tmpOffset,mp,"op: push ac");        
         genExp(tree->child[0]->child[0]);
         emitRM("LDA", ac1, 0, ac, "save index to ac1");
+        loc = getLocalNameOffset(tree->child[0]->attr.name);
+        if (loc == -1)
+        {
+          loc = getParameterOffset(tree->child[0]->attr.name);
+          if (loc == -1)
+          {
+            loc = st_get_location("~", tree->child[0]->attr.name);
+            emitRM("LDA", ac, loc, gp, "load address");
+            emitRO("ADD", ac1, ac, ac1, "ac1 = address + index");
+          }
+          else
+          {
+            emitRM("LD", ac, loc + 1, fp, "load address");
+            emitRO("ADD", ac1, ac, ac1, "ac1 = address + index");
+          }
+        }
+        else
+        {
+          emitRM("LDA", ac, loc, mp, "load address");
+          emitRO("ADD", ac1, ac, ac1, "ac1 = address + index");
+        }
         emitRM("LD",ac,tmpOffset++,mp,"op: load ac");
+        emitRM("ST", ac, 0, ac1, "store");
+        if (TraceCode) emitComment("<- store value end") ;
+        if (TraceCode)  emitComment("<- assign") ;
+        break;
       }
       loc = getLocalNameOffset(tree->child[0]->attr.name);
       if (loc == -1) //parameter, global
@@ -346,21 +382,21 @@ void genExp( TreeNode * tree)
         if (loc == -1)
         {
           loc = st_get_location("~", tree->child[0]->attr.name);
-          if(isArray == 1) emitRO("ADD", gp, gp, ac1, "to access array");
+          //if(isArray == 1) emitRO("ADD", gp, gp, ac1, "to access array");
           emitRM("ST", ac, loc, gp, "assign: store value");
-          if(isArray == 1) emitRO("SUB", gp, gp, ac1, "to access array");
+          //if(isArray == 1) emitRO("SUB", gp, gp, ac1, "to access array");
         }
         else
         {
-          if(isArray == 1) emitRO("ADD", fp, fp, ac1, "to access array");
+          //if(isArray == 1) emitRO("ADD", fp, fp, ac1, "to access array");
           emitRM("ST", ac, loc + 1, fp, "assign: store value");
-          if(isArray == 1) emitRO("SUB", fp, fp, ac1, "to access array");
+          //if(isArray == 1) emitRO("SUB", fp, fp, ac1, "to access array");
         }
       }
       else
-      { if(isArray == 1) emitRO("ADD", mp, mp, ac1, "to access array");
+      { //if(isArray == 1) emitRO("ADD", mp, mp, ac1, "to access array");
         emitRM("ST", ac, loc, mp, "assign: store value");
-        if(isArray == 1) emitRO("SUB", mp, mp, ac1, "to access array");
+        //if(isArray == 1) emitRO("SUB", mp, mp, ac1, "to access array");
       }
       if (TraceCode) emitComment("<- store value end") ;
       if (TraceCode)  emitComment("<- assign") ;
